@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ajouter une notion — Manuel de cours</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="manuel.css">
+</head>
+<body data-page="ajouter">
+<header id="entete"></header>
+<div class="cadre">
+  <nav class="sommaire" id="sommaire" aria-label="Sommaire"></nav>
+  <main id="contenu">
+    <div class="fil"><a href="index.html">Accueil</a> › Comment ajouter une notion</div>
+    <h1>Comment ajouter une notion</h1>
+    <p>Tout le contenu du manuel est dans un seul fichier : <code>manuel/donnees/notions.js</code>. Les pages, le sommaire, la recherche et le glossaire se mettent à jour tout seuls.</p>
+
+    <ol class="etapes-ajout">
+      <li><strong>Choisir le chapitre.</strong> Ouvrir <code>notions.js</code> et repérer le chapitre (les lignes <code>// ── 1. Git</code>, <code>// ── 2. …</code>). Si aucun ne convient, en créer un nouveau sur le modèle d'un chapitre existant (id, titre, resume, intro, notions).</li>
+      <li><strong>Vérifier que la notion n'existe pas déjà.</strong> La chercher avec la barre de recherche (<kbd>/</kbd>). Si elle existe, compléter la fiche au lieu d'en créer une seconde.</li>
+      <li><strong>Copier ce modèle</strong> à la fin de la liste <code>notions: [ … ]</code> du chapitre, après une virgule :
+<pre><code>{ id: 'chapitre-mot-cle', titre: 'Titre court de la notion',
+  definition: `&lt;p&gt;Une ou deux phrases simples.&lt;/p&gt;`,
+  exemple: `&lt;p&gt;Un cas concret, si possible tiré du stage.&lt;/p&gt;`,
+  schema: `&lt;div class="flux"&gt;&lt;span class="etape"&gt;Étape 1&lt;/span&gt;&lt;span class="fleche"&gt;→&lt;/span&gt;&lt;span class="etape"&gt;Étape 2&lt;/span&gt;&lt;/div&gt;`,
+  image: `Une comparaison de la vie courante pour s'en souvenir.`, icone: '💡',
+  retenir: `&lt;div class="a-retenir"&gt;La phrase à retenir.&lt;/div&gt;`,
+  termes: [['Mot', 'Sa définition en une phrase.']] },</code></pre></li>
+      <li><strong>Ne garder que l'utile.</strong> <code>id</code>, <code>titre</code> et <code>definition</code> sont obligatoires ; supprimer les autres lignes si elles n'apportent rien. Une fiche courte se relit mieux qu'une fiche complète.</li>
+      <li><strong>Vérifier.</strong> Recharger la page du chapitre (<kbd>Ctrl</kbd> + <kbd>F5</kbd>) : la fiche apparaît, avec son entrée dans le sommaire du chapitre, la recherche et le glossaire.</li>
+      <li><strong>Enregistrer dans Git.</strong> <code>git add manuel</code> puis <code>git commit -m "manuel: fiche …"</code>.</li>
+    </ol>
+
+    <h2>Les blocs disponibles</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Champ</th><th>Affiché comme</th><th>Astuce</th></tr></thead>
+      <tbody>
+        <tr><td><code>definition</code></td><td>Définition</td><td>Obligatoire. Mots simples, pas de jargon non défini.</td></tr>
+        <tr><td><code>exemple</code></td><td>Exemple</td><td>Code dans <code>&lt;pre&gt;&lt;code&gt;…&lt;/code&gt;&lt;/pre&gt;</code>.</td></tr>
+        <tr><td><code>schema</code></td><td>Schéma</td><td>Chaîne d'étapes (<code>flux</code>), tableau (<code>table-wrap</code>) ou dessin en texte dans <code>&lt;pre&gt;</code>.</td></tr>
+        <tr><td><code>image</code> + <code>icone</code></td><td>Image pour retenir</td><td>Une comparaison concrète (restaurant, usine…) et un émoji.</td></tr>
+        <tr><td><code>retenir</code></td><td>À retenir</td><td>Classe <code>a-retenir</code> (bleu) ou <code>attention</code> (rose) pour un piège.</td></tr>
+        <tr><td><code>termes</code></td><td>Glossaire</td><td>Un terme déjà défini ailleurs n'apparaît qu'une fois : reprendre la même définition.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="attention"><strong>Pièges :</strong> une apostrophe dans un texte entre <code>'…'</code> s'écrit <code>\'</code> ; les textes entre accents graves <code>`…`</code> l'acceptent telle quelle. Ne jamais écrire de mot de passe ni de jeton dans le manuel.</div>
+  </main>
+</div>
+<script src="donnees/notions.js"></script>
+<script src="manuel.js"></script>
+</body>
+</html>

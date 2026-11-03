@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manuel de cours</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="manuel.css">
+</head>
+<body data-page="accueil">
+<header id="entete"></header>
+<div class="cadre">
+  <nav class="sommaire" id="sommaire" aria-label="Sommaire"></nav>
+  <main id="contenu">
+    <section class="hero">
+      <h1>Manuel de cours</h1>
+      <p>Les notions rencontrées pendant le stage, une fiche courte par notion : une définition, un exemple, un schéma quand il aide, et ce qu'il faut retenir. Tapez <code>/</code> pour chercher.</p>
+      <p class="muted" id="compte" style="margin-top:10px"></p>
+    </section>
+    <div class="chapitres" id="chapitres"></div>
+  </main>
+</div>
+<script src="donnees/notions.js"></script>
+<script src="manuel.js"></script>
+</body>
+</html>
