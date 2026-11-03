@@ -47,6 +47,11 @@ th { background: color-mix(in srgb, var(--p, var(--menthe)) 70%, var(--blanc)); 
 .resultats .ou { font-size: 0.78rem; color: var(--gris-doux); }
 .resultats mark { background: var(--beurre); color: inherit; border-radius: 4px; }
 
+/* Bouton ☰ du sommaire : affiché seulement sur petit écran */
+.hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 42px; height: 42px; flex-shrink: 0; padding: 0 10px;
+  border: 1.5px solid var(--trait); border-radius: 12px; background: var(--blanc); cursor: pointer; }
+.hamburger span { display: block; height: 2px; border-radius: 2px; background: var(--encre); transition: transform 0.2s, opacity 0.2s; }
+
 /* Mise en page */
 .cadre { display: flex; align-items: flex-start; }
 .sommaire { position: sticky; top: 68px; width: var(--sidebar-w); flex-shrink: 0; height: calc(100vh - 68px); overflow: auto; padding: 8px 14px 24px; }
@@ -116,7 +121,14 @@ svg .l { stroke: var(--encre); stroke-width: 1.5; fill: none; }
   .marque { width: auto; }
   .marque .nom { display: none; }
   .cadre { display: block; }
-  .sommaire { position: static; width: auto; height: auto; padding: 8px 14px; }
+  /* Sommaire replié derrière le bouton ☰, déroulé sous l'en-tête à la demande */
+  .hamburger { display: flex; }
+  .sommaire { display: none; position: fixed; z-index: 9; top: 68px; left: 0; right: 0; width: auto; height: auto; max-height: calc(100vh - 68px);
+    padding: 8px 14px 16px; background: var(--creme); box-shadow: 0 14px 24px rgba(0,0,0,0.12); }
+  body.sommaire-ouvert .sommaire { display: block; }
+  body.sommaire-ouvert .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  body.sommaire-ouvert .hamburger span:nth-child(2) { opacity: 0; }
+  body.sommaire-ouvert .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
   main { margin: 0; border-radius: 0; padding: 22px 16px 36px; }
   .hero { padding: 24px 20px; }
   .fiche { padding: 18px 16px; }

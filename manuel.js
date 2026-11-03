@@ -16,6 +16,7 @@
   var entete = document.getElementById('entete');
   entete.className = 'entete';
   entete.innerHTML =
+    '<button type="button" class="hamburger" id="hamburger" aria-label="Ouvrir le sommaire" aria-expanded="false" aria-controls="sommaire"><span></span><span></span><span></span></button>' +
     '<a class="marque" href="index.html"><span class="logo" aria-hidden="true">M</span><span class="nom">Manuel de cours<small>Notions vues en stage</small></span></a>' +
     '<div class="recherche"><input id="champ" type="search" autocomplete="off" placeholder="Chercher une notion, un mot, une commande…  ( / )" aria-label="Chercher dans le manuel"><div class="resultats" id="resultats"></div></div>' +
     '<img class="logo-univ" src="images/logo-nanterre.webp" alt="Université Paris Nanterre" onerror="this.remove()">';
@@ -30,6 +31,18 @@
     '<a href="glossaire.html"' + (page === 'glossaire' ? ' class="actif"' : '') + '>Glossaire</a>' +
     '<a href="ajouter.html"' + (page === 'ajouter' ? ' class="actif"' : '') + '>Comment ajouter une notion</a>';
   document.getElementById('sommaire').innerHTML = html;
+
+  // Petit écran : le sommaire est replié derrière le bouton ☰ ; il se ferme au choix d'un lien, avec Échap ou au clic à côté
+  var burger = document.getElementById('hamburger'), sommaire = document.getElementById('sommaire');
+  function ouvrir(oui) {
+    document.body.classList.toggle('sommaire-ouvert', oui);
+    burger.setAttribute('aria-expanded', oui);
+    burger.setAttribute('aria-label', oui ? 'Fermer le sommaire' : 'Ouvrir le sommaire');
+  }
+  burger.addEventListener('click', function (e) { e.stopPropagation(); ouvrir(!document.body.classList.contains('sommaire-ouvert')); });
+  sommaire.addEventListener('click', function (e) { if (e.target.closest('a')) ouvrir(false); });
+  document.addEventListener('click', function (e) { if (!sommaire.contains(e.target)) ouvrir(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') ouvrir(false); });
 
   // Index de recherche : une entrée par fiche (titre + tout son texte) et une par terme de glossaire
   var index = [];
