@@ -234,7 +234,27 @@ git worktree list                                  # voir tous les dossiers de t
   { id: 'git-partager', titre: 'Partager un projet sans Git',
     definition: `<p>Le dossier caché <code>.git</code> contient <strong>tout l'historique</strong> du dépôt, y compris les fichiers supprimés ou rangés ailleurs. Envoyer le dossier d'un projet avec son <code>.git</code>, c'est envoyer tout son passé.</p>`,
     exemple: `<p>Pour transmettre la doc à un responsable : un zip avec seulement <code>site/</code> et <code>documentation/</code>, sans <code>.git</code> ni les dossiers perso. L'Explorateur Windows masque <code>.git</code> : il faut afficher les éléments masqués pour le voir.</p>`,
-    retenir: `<div class="attention">Un lien <code>file:///C:/…</code> pointe vers votre PC : il ne marche chez personne d'autre. Pour partager, on envoie les fichiers ou un lien vers un serveur.</div>` }
+    retenir: `<div class="attention">Un lien <code>file:///C:/…</code> pointe vers votre PC : il ne marche chez personne d'autre. Pour partager, on envoie les fichiers ou un lien vers un serveur.</div>` },
+
+  { id: 'git-reecrire', titre: 'Réécrire des messages de commit sans rien perdre',
+    definition: `<p>Un commit est identifié par une empreinte (SHA) calculée sur tout son contenu, message compris. Changer un seul message change donc l'empreinte de ce commit et de tous ceux qui le suivent : c'est une <strong>réécriture de l'historique</strong>. Le serveur refuse ensuite un push normal, car les deux historiques ne se suivent plus : il faut un <strong>push forcé</strong>.</p>`,
+    schema: `<div class="flux"><span class="etape">Branche de sauvegarde<small>avant tout</small></span><span class="fleche">→</span><span class="etape">Réécriture<small>git filter-branch --msg-filter</small></span><span class="fleche">→</span><span class="etape">Vérifications<small>nombre, dates, auteurs, contenu</small></span><span class="fleche">→</span><span class="etape">Push forcé<small>--force-with-lease</small></span><span class="fleche">→</span><span class="etape">Contrôle sur le serveur<small>git ls-remote</small></span></div>`,
+    exemple: `<pre><code>git branch sauvegarde-avant-reecriture
+git filter-branch --msg-filter "sed '/^Co-Authored-By:/d'" -- --all
+git diff origin/main main --stat        # vide : seuls les messages ont changé
+git push --force-with-lease origin main
+git ls-remote origin                    # le serveur montre-t-il les nouveaux commits ?</code></pre>
+<p>Sur le manuel, la réécriture était faite sur le PC, mais le push n'était jamais arrivé sur GitHub. Seul <code>git ls-remote</code>, qui interroge le serveur, l'a montré : le terminal local, lui, affichait un dépôt propre.</p>`,
+    image: `Réécrire l'historique, c'est réimprimer un livre déjà distribué avec une page corrigée : toutes les pages suivantes changent de numéro, et chaque lecteur doit jeter son ancien exemplaire.`, icone: '📚',
+    retenir: `<div class="attention"><code>--force-with-lease</code> plutôt que <code>--force</code> : il refuse d'écraser le serveur si quelqu'un y a poussé entre-temps. Et on ne réécrit qu'un dépôt dont on est seul à se servir.</div>`,
+    termes: [['Réécriture de l\'historique', 'Modification de commits déjà faits (message, contenu), qui change leur empreinte et celle des commits suivants.'], ['Push forcé', 'Envoi qui remplace l\'historique du serveur par l\'historique local, au lieu de le compléter.'], ['git ls-remote', 'Commande qui affiche les branches et les commits présents sur le serveur, sans rien télécharger.']] },
+
+  { id: 'git-contributeurs', titre: 'Co-auteur d\'un commit et liste des contributeurs',
+    definition: `<p>Une ligne <code>Co-Authored-By: Nom &lt;adresse&gt;</code> à la fin d'un message de commit déclare un second auteur. GitHub la lit : si l'adresse correspond à un compte, ce compte apparaît dans la liste <strong>Contributors</strong> du dépôt. Les <strong>collaborateurs</strong> sont autre chose : les personnes qui ont accès au dépôt.</p>`,
+    exemple: `<p>Après la réécriture des messages, l'API de GitHub ne listait plus qu'un contributeur, mais la page web en affichait encore deux : cet encart est calculé à part et gardé en cache. Il se met à jour tout seul, parfois après plus d'un jour. Changer la branche par défaut puis la remettre force souvent le recalcul.</p>`,
+    retenir: `<div class="a-retenir">Pour savoir ce que contient vraiment un dépôt, on interroge ses données (API, <code>git log</code>), pas un affichage qui peut être en retard.</div>`,
+    termes: [['Co-auteur (commit)', 'Second auteur déclaré par une ligne Co-Authored-By dans le message d\'un commit.'], ['Contributeur', 'Compte qui apparaît comme auteur ou co-auteur de commits d\'un dépôt.'], ['Collaborateur', 'Personne qui a reçu un accès à un dépôt.']] }
+
   ] },
 
 // ─────────────────────────────────────────────── 2. GitHub ou GitLab
@@ -331,7 +351,25 @@ suspend: true                  # en pause : plus aucun lancement, rien n'est sup
 concurrencyPolicy: Forbid      # jamais deux exécutions en même temps</code></pre>
 <p>Dans la doc d'outil-prix, une application de batchs, les CronJobs de production étaient en pause depuis son remplacement par un nouvel outil : le code existe toujours, mais rien ne tourne. Seul le dépôt de déploiement le montrait.</p>`,
     retenir: `<div class="attention">Kubernetes juge une exécution sur son <strong>code de sortie</strong> : 0 = réussie. Un programme qui attrape ses erreurs et sort quand même avec 0 paraît réussi : pas de relance, pas d'alerte. Avec <code>Forbid</code> et sans durée maximale (<code>activeDeadlineSeconds</code>), une exécution bloquée empêche toutes les suivantes. Enfin, l'heure du <code>schedule</code> est celle du cluster, souvent UTC, sauf si un fuseau est précisé (<code>timeZone</code>).</div>`,
-    termes: [['CronJob', 'Objet Kubernetes qui lance un programme à heures fixes.'], ['Expression cron', 'Horaire en cinq champs : minute, heure, jour du mois, mois, jour de la semaine.'], ['Code de sortie', 'Nombre rendu par un programme qui se termine : 0 = succès, autre chose = échec.']] }
+    termes: [['CronJob', 'Objet Kubernetes qui lance un programme à heures fixes.'], ['Expression cron', 'Horaire en cinq champs : minute, heure, jour du mois, mois, jour de la semaine.'], ['Code de sortie', 'Nombre rendu par un programme qui se termine : 0 = succès, autre chose = échec.']] },
+
+  { id: 'mel-argocd', titre: 'Argo CD à grande échelle : ApplicationSet, vagues, prune et self-heal',
+    definition: `<p>Une plateforme commune peut déployer, depuis un seul Argo CD, des dizaines de composants sur plusieurs clusters. Plutôt que d'écrire chaque application à la main, un <strong>ApplicationSet</strong> les génère à partir d'un modèle et d'une liste (dossiers, clusters). Chaque composant porte un numéro de <strong>vague</strong> qui fixe l'ordre d'installation.</p>`,
+    schema: `<div class="table-wrap"><table><thead><tr><th>Option</th><th>Effet</th><th>Si elle est désactivée</th></tr></thead><tbody>
+      <tr><td>Prune</td><td>Supprime du cluster ce qui a disparu du dépôt</td><td>Un objet retiré de Git reste dans le cluster</td></tr>
+      <tr><td>Self-heal</td><td>Annule une modification faite à la main dans le cluster</td><td>La modification reste jusqu'à la prochaine synchronisation</td></tr>
+    </tbody></table></div>`,
+    exemple: `<p>Sur une plateforme de supervision, un dépôt GitOps installait les outils sur deux clusters « hôtes » et déclarait dix clusters « tenants », qui recevaient seulement leurs collecteurs. Le prune était désactivé sur l'hôte : annuler un commit n'y retirait donc pas les objets qu'il avait ajoutés.</p>`,
+    retenir: `<div class="a-retenir">Avant d'annuler un commit GitOps, vérifier si le prune est actif : sinon, il faut aussi supprimer à la main ce que le commit avait créé.</div>`,
+    termes: [['ApplicationSet', 'Objet Argo CD qui génère automatiquement des applications à partir d\'un modèle et d\'une liste.'], ['Vague (sync wave)', 'Numéro d\'ordre d\'Argo CD : les objets sont appliqués par vagues croissantes.'], ['Prune', 'Option d\'Argo CD qui supprime du cluster ce qui a disparu du dépôt.'], ['Self-heal', 'Option d\'Argo CD qui annule une modification faite à la main dans le cluster.'], ['Tenant', 'Client d\'une plateforme partagée, dont les données ou les ressources sont isolées de celles des autres.']] },
+
+  { id: 'mel-observabilite', titre: 'Observabilité : métriques, journaux, traces et profils',
+    definition: `<p>Surveiller une application, c'est collecter quatre sortes de données : des <strong>métriques</strong> (nombres dans le temps), des <strong>journaux</strong> (lignes de texte), des <strong>traces</strong> (le chemin d'une requête entre services) et des <strong>profils</strong> (où le programme passe son temps). Un <strong>collecteur</strong> installé près des applications les envoie à une plateforme commune, qui range chaque envoi par tenant.</p>`,
+    schema: `<div class="flux"><span class="etape">Applications<small>d'un cluster</small></span><span class="fleche">→</span><span class="etape">Collecteur<small>OpenTelemetry</small></span><span class="fleche">→</span><span class="etape">Plateforme<small>une base par type de donnée</small></span><span class="fleche">→</span><span class="etape">Tableaux de bord et alertes</span></div>`,
+    exemple: `<p>Les journaux d'applications partaient à la fois vers le service de journaux du cloud et vers la nouvelle plateforme. Le coût du premier était en passe de doubler en trois mois : envoyer les mêmes données à deux endroits se paie deux fois.</p>`,
+    retenir: `<div class="a-retenir">Une donnée de supervision a un coût : on décide ce qu'on garde, où, et combien de temps (rétention).</div>`,
+    termes: [['Observabilité', 'Capacité à comprendre l\'état d\'un système à partir de ses métriques, journaux, traces et profils.'], ['Trace', 'Suivi d\'une requête à travers les services qu\'elle traverse, avec la durée de chaque étape.'], ['OpenTelemetry', 'Standard ouvert de collecte des métriques, journaux et traces des applications.'], ['Rétention', 'Durée pendant laquelle des données sont conservées avant d\'être supprimées.']] }
+
   ] },
 
 // ─────────────────────────────────────────────── Batchs
@@ -366,6 +404,36 @@ java -jar outil-prix.jar nettoyer</code></pre>
     image: `Appuyer deux fois sur le bouton d'appel d'un ascenseur est idempotent : un seul ascenseur vient. Glisser deux pièces dans un distributeur ne l'est pas : deux cafés tombent.`, icone: '🛗',
     retenir: `<div class="a-retenir">Avant de relancer : que fait le programme d'une donnée déjà là ? L'écrase-t-il, l'ignore-t-il ou l'ajoute-t-il en double ? Et l'ordre des fichiers compte-t-il ?</div>`,
     termes: [['Idempotence', 'Propriété d\'un traitement qui donne le même résultat qu\'on le lance une fois ou plusieurs.'], ['Rejeu', 'Nouvelle exécution d\'un traitement sur des données déjà traitées, souvent après une erreur.']] }
+  ] },
+
+// ─────────────────────────────────────────────── I
+{ id: 'iac', titre: 'Infrastructure en code', resume: 'Terraform, Terragrunt, état, réseau cloud : décrire les serveurs dans des fichiers.',
+  intro: `Les réseaux, clusters, bases et droits d'une plateforme cloud ne se créent plus à la main : ils sont décrits dans des fichiers versionnés, puis un outil fait correspondre le cloud à ces fichiers.`,
+  notions: [
+  { id: 'iac-terraform', titre: 'Terraform : plan, apply et état',
+    definition: `<p><strong>Terraform</strong> lit des fichiers qui décrivent les ressources voulues (un réseau, un cluster, un bucket). La commande <code>plan</code> montre ce qu'il va créer, modifier ou supprimer ; <code>apply</code> le fait. Pour savoir ce qui existe déjà, il tient un <strong>état</strong> : un fichier, souvent rangé dans un bucket, qui fait le lien entre le code et les ressources réelles.</p>`,
+    schema: `<div class="flux"><span class="etape">Fichiers .tf<small>ce qu'on veut</small></span><span class="fleche">→</span><span class="etape">plan<small>différence avec l'état</small></span><span class="fleche">→</span><span class="etape">apply<small>crée ou modifie</small></span><span class="fleche">→</span><span class="etape">État<small>ce qui existe</small></span></div>`,
+    exemple: `<p>Dans un dépôt sans CI, chaque <code>apply</code> était lancé depuis un poste. Rien ne disait donc quel commit était réellement appliqué dans chaque environnement : la doc l'a signalé comme une information manquante. Une modification faite à la main dans la console du cloud crée une <strong>dérive</strong>, que le prochain <code>plan</code> fera apparaître.</p>`,
+    image: `Le code est le <strong>plan de l'architecte</strong>, l'état est le <strong>registre du chantier</strong> : sans registre, impossible de savoir quels murs sont déjà construits.`, icone: '🏗️',
+    retenir: `<div class="attention">Ce qui fait foi, c'est l'état et le cloud, pas la branche principale : un commit fusionné n'est appliqué que si quelqu'un a lancé <code>apply</code>.</div>`,
+    termes: [['Terraform', 'Outil d\'infrastructure en code : des fichiers décrivent les ressources voulues, et Terraform crée, modifie ou supprime les ressources réelles pour s\'y conformer.'], ['État Terraform', 'Fichier qui associe chaque ressource du code à la ressource réelle créée dans le cloud.'], ['Dérive', 'Écart entre le code et la ressource réelle, souvent dû à une modification faite à la main.']] },
+
+  { id: 'iac-terragrunt', titre: 'Terragrunt : une unité par ressource',
+    definition: `<p><strong>Terragrunt</strong> enveloppe Terraform pour les gros dépôts. Chaque dossier est une <strong>unité</strong> (un réseau, un cluster…) avec son propre état. Les réglages communs sont écrits une seule fois et hérités : fichier racine, puis environnement, puis unité. Une unité peut lire les sorties d'une autre (<code>dependency</code>), qui est alors appliquée avant elle.</p>`,
+    schema: `<pre>racine.hcl            état distant, fournisseurs
+└── prd/env.hcl       projet et région de la production
+    └── reseau/terragrunt.hcl     une unité
+    └── cluster/terragrunt.hcl    dépend de reseau</pre>`,
+    exemple: `<p>Un dépôt était en pleine migration d'une arborescence à une autre : deux dossiers, deux buckets d'état et deux identités pour appliquer les changements. Une ressource décrite aux deux endroits risque d'être modifiée deux fois, ou supprimée par l'un pendant que l'autre la crée.</p>`,
+    retenir: `<div class="a-retenir">Le fichier <code>.terraform.lock.hcl</code> fige la version exacte de chaque fournisseur : il se commite, comme un fichier de dépendances.</div>`,
+    termes: [['Terragrunt', 'Surcouche de Terraform qui factorise la configuration commune (état distant, providers, variables) entre de nombreux dossiers.'], ['Unité Terragrunt', 'Dossier qui décrit un ensemble de ressources et possède son propre état.'], ['Provider', 'Extension de Terraform qui sait gérer les ressources d\'une plateforme (cloud, base, DNS).']] },
+
+  { id: 'iac-reseau', titre: 'Réseau cloud : plages privées, NAT et peering',
+    definition: `<p>Un <strong>VPC</strong> est un réseau privé dans le cloud. Ses machines utilisent des <strong>adresses privées</strong>, prises dans des plages réservées (10.x, 172.16 à 172.31, 192.168.x), qui ne sont pas joignables depuis Internet. Pour sortir, elles passent par un <strong>NAT</strong>, qui leur prête une adresse publique commune. Un <strong>peering</strong> relie deux VPC pour qu'ils se parlent en privé.</p>`,
+    exemple: `<p>Un cluster de préproduction a manqué d'adresses pour ses nœuds. Sa plage ne pouvant pas changer, il a fallu le recréer sur un nouveau sous-réseau, et un tir de performance a été annulé. Autre effet de bord : des sites externes autorisaient les adresses de sortie des projets dans une liste tenue à la main, qu'il fallait mettre à jour à chaque nouvelle adresse NAT.</p>`,
+    image: `Les adresses privées sont les <strong>numéros de bureau</strong> d'un immeuble ; le NAT est l'<strong>accueil</strong> qui appelle l'extérieur pour tout le monde, avec le numéro du standard.`, icone: '🏢',
+    retenir: `<div class="a-retenir">Dans une doc, une plage privée peut décrire l'architecture ; une adresse publique, ou celle d'un poste ou d'une personne, ne s'écrit jamais.</div>`,
+    termes: [['VPC', 'Réseau privé virtuel d\'un fournisseur cloud, isolé des autres clients.'], ['Adresse privée', 'Adresse IP prise dans une plage réservée aux réseaux internes, non joignable depuis Internet.'], ['NAT', 'Traduction d\'adresses qui permet à des machines privées de sortir sur Internet avec une adresse publique commune.'], ['Peering', 'Liaison privée entre deux réseaux, qui permet à leurs machines de se joindre sans passer par Internet.']] }
   ] },
 
 // ─────────────────────────────────────────────── 5. Isolation et sécurité du PC
@@ -574,6 +642,35 @@ ORDER BY date_creation;</code></pre>`,
     termes: [['Data URI', 'Fichier (image, police…) écrit directement dans le code sous forme de texte, au lieu d\'un fichier séparé.'], ['Courbe de Bézier', 'Courbe définie par un point de départ, un point d\'arrivée et des points de contrôle qui l\'attirent.']] }
   ] },
 
+// ─────────────────────────────────────────────── M
+{ id: 'mobile', titre: 'Applications mobiles', resume: 'Native, webview ou hybride ; build, mise à jour à distance et stores ; ce que l\'application emporte.',
+  intro: `Une application mobile se télécharge depuis les stores et vit sur le téléphone : on ne la met pas à jour comme un site web, et tout ce qu'elle contient peut être lu.`,
+  notions: [
+  { id: 'mobile-hybride', titre: 'Native, webview ou hybride',
+    definition: `<p>Avec <strong>React Native</strong>, les écrans sont écrits en JavaScript ou TypeScript mais dessinés avec les composants natifs du téléphone. <strong>Expo</strong> est la boîte à outils qui l'accompagne (build, mises à jour, accès à la caméra ou à la position). Une <strong>webview</strong> affiche une page web à l'intérieur de l'application. Une application <strong>hybride</strong> mélange les deux.</p>`,
+    exemple: `<p>Dans une application de magasin, l'accueil, le panier et le choix du magasin étaient natifs, tandis que les listes de produits et le compte client étaient des pages du site web affichées en webview. L'application passait au site le consentement aux cookies et le magasin choisi, et s'annonçait par un user-agent spécial ; le site lui répondait par des messages (ouvrir un document, une erreur de panier).</p>`,
+    retenir: `<div class="a-retenir">Pour documenter une application hybride, on dit pour chaque écran s'il est natif ou web : un bug d'écran web se corrige sur le site, sans republier l'application.</div>`,
+    termes: [['React Native', 'Cadre JavaScript pour écrire des applications mobiles aux écrans natifs, pour iOS et Android.'], ['Expo', 'Boîte à outils autour de React Native : build, mises à jour à distance, accès aux fonctions du téléphone.'], ['Webview', 'Composant qui affiche une page web à l\'intérieur d\'une application.'], ['Application hybride', 'Application dont certains écrans sont natifs et d\'autres des pages web affichées en webview.']] },
+
+  { id: 'mobile-publication', titre: 'Build, mise à jour à distance et stores',
+    definition: `<p>Un <strong>build</strong> produit le fichier installable de l'application, qui passe par la validation des stores. Une <strong>mise à jour à distance</strong> (OTA) remplace seulement le code JavaScript, sans passer par les stores : l'application la télécharge au démarrage, mais seulement si son code natif est compatible.</p>`,
+    schema: `<div class="table-wrap"><table><thead><tr><th></th><th>Build</th><th>Mise à jour à distance</th></tr></thead><tbody>
+      <tr><td>Contenu</td><td>Toute l'application</td><td>Le code JavaScript seulement</td></tr>
+      <tr><td>Passe par les stores</td><td>Oui, avec validation</td><td>Non</td></tr>
+      <tr><td>Délai</td><td>Heures ou jours</td><td>Minutes</td></tr>
+      <tr><td>Exemple d'usage</td><td>Nouvelle permission, nouveau module natif</td><td>Correctif d'un calcul ou d'un texte</td></tr>
+    </tbody></table></div>`,
+    exemple: `<p>Une application déclinée pour deux enseignes et trois environnements avait six configurations de build. Poser un tag dans GitLab lançait la publication : <code>build-a-prod-20261105-1.0.3</code> pour un build de production, <code>ota-prod-20261105-1.0.2-correctif</code> pour une mise à jour à distance. La liste des tags disait donc quelle version était sortie, et quand.</p>`,
+    retenir: `<div class="attention">La version réellement installée chez les clients dépend des stores et des téléphones : le dépôt ne montre que ce qui a été publié.</div>`,
+    termes: [['Build (mobile)', 'Fichier installable d\'une application, produit pour iOS ou Android et soumis aux stores.'], ['Mise à jour à distance (OTA)', 'Nouvelle version du code JavaScript d\'une application, téléchargée au démarrage sans passer par les stores.'], ['Variante d\'application', 'Combinaison d\'une enseigne et d\'un environnement, qui produit une application distincte.']] },
+
+  { id: 'mobile-embarque', titre: 'Ce que l\'application emporte avec elle',
+    definition: `<p>Une application installée peut être décompressée et lue : tout ce qu'elle contient (adresses des API, clés des services tiers) est donc à considérer comme <strong>public</strong>. Les vrais secrets restent côté serveur. Sur le téléphone, les jetons de connexion se rangent dans le <strong>stockage sécurisé</strong> du système, pas dans un simple fichier.</p>`,
+    exemple: `<p>Une application embarquait les clés de ses services de notifications et de consentement. Ce n'est pas une faute en soi, mais la doc les signale sans valeur. En production, elle refusait aussi les simulateurs et les téléphones modifiés (rootés ou débridés), et demandait plusieurs permissions : position pour le magasin le plus proche, caméra pour scanner, notifications, suivi publicitaire.</p>`,
+    retenir: `<div class="a-retenir">Chaque permission et chaque donnée gardée sur le téléphone se justifie : à quoi sert-elle, et qui peut la lire ?</div>`,
+    termes: [['Stockage sécurisé', 'Coffre du système du téléphone (Keychain sur iOS, Keystore sur Android) qui chiffre les données sensibles d\'une application.'], ['Appareil rooté', 'Téléphone dont les protections du système ont été retirées, ce qui permet de lire les données des applications.'], ['Permission', 'Autorisation demandée à l\'utilisateur pour accéder à une fonction du téléphone (position, caméra, notifications).']] }
+  ] },
+
 // ─────────────────────────────────────────────── Scripts et outils
 { id: 'outils', titre: 'Scripts et outils du poste', resume: 'PowerShell, encodage, serveur local, Jira.',
   intro: `Les petits outils du quotidien : ceux qui bloquent quand on ne connaît pas leurs règles.`,
@@ -661,7 +758,20 @@ project = PROJ AND created &gt;= "2024-10-22"</code></pre><p>C'est ce type de re
     </tbody></table></div>`,
     exemple: `<p>Exactitude notée 2, poids 4 : 8 points sur 12. Deux règles fortes : sans les deux relectures, l'exactitude ne dépasse pas 1 ; un secret recopié dans la doc plafonne la note à 8/20.</p>`,
     retenir: `<div class="a-retenir">Une note sans preuve ne sert à rien : chaque critère sous 3 cite l'endroit, la preuve et la correction proposée.</div>`,
-    termes: [['Grille de notation', 'Liste de critères pondérés qui permet de noter plusieurs docs de la même façon.'], ['Pondération', 'Poids donné à un critère selon son importance.']] }
+    termes: [['Grille de notation', 'Liste de critères pondérés qui permet de noter plusieurs docs de la même façon.'], ['Pondération', 'Poids donné à un critère selon son importance.']] },
+
+  { id: 'doc-audit', titre: 'Auditer une doc contre ses propres règles',
+    definition: `<p>Un <strong>audit</strong> reprend une à une les règles de rédaction et vérifie chacune sur les pages livrées. Il trouve des écarts de forme (sigle non défini, glossaire manquant, déduction présentée comme sûre), mais surtout des <strong>raccourcis</strong> pris pendant la rédaction, qu'aucun contrôle ne voyait.</p>`,
+    exemple: `<p>Un audit a montré que, pour deux docs, seules quelques descriptions de tickets avaient été lues : le reste était résumé à partir des titres, pour économiser du temps et du contexte, et rien ne le vérifiait. La règle a été rendue <strong>vérifiable</strong> : au-delà de 20 tickets, un agent lit toutes les descriptions, l'en-tête de la doc donne le nombre lu, et la grille de notation baisse la note si elles ne le sont pas.</p>`,
+    retenir: `<div class="a-retenir">Une règle qu'aucun contrôle ne vérifie finit par être contournée : on lui ajoute un compteur visible ou un critère de notation.</div>`,
+    termes: [['Audit (d\'une doc)', 'Vérification, règle par règle, qu\'une doc respecte les consignes qui ont servi à la rédiger.']] },
+
+  { id: 'doc-tickets', titre: 'Lire les tickets, pas seulement leurs titres',
+    definition: `<p>Le titre d'un ticket est écrit à sa création ; la description, elle, dit ce qui a vraiment été décidé. Les deux divergent souvent, et seule la description permet de relier un commit à une règle ou à un choix.</p>`,
+    exemple: `<p>En lisant toutes les descriptions d'un dépôt, on a trouvé : un titre « prod » dont la description, copiée d'un autre ticket, parlait de préproduction ; un « renouvellement de certificat » qui changeait en fait de type de certificat ; un ticket clos dont la description montrait des étapes jamais faites ; une clé de ticket erronée, car les commits faisaient tout autre chose ; et une clé d'API écrite en clair dans une description, à révoquer.</p>`,
+    retenir: `<div class="attention">Un secret trouvé dans un ticket se signale, sans sa valeur, et se fait révoquer : un outil de tickets n'est pas un coffre.</div>`,
+    termes: [['Description (ticket)', 'Texte détaillé d\'un ticket : besoin, décision, critères d\'acceptation, à lire en plus du titre.']] }
+
   ] },
 
 // ─────────────────────────────────────────────── 9. Langages
