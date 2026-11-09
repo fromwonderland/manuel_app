@@ -148,3 +148,11 @@ svg .l { stroke: var(--encre); stroke-width: 1.5; fill: none; }
 .liens-utiles { margin: auto 0 0; padding: 8px 0 0; list-style: none; border-top: 1.5px solid color-mix(in srgb, var(--c) 45%, transparent); }
 .liens-utiles li { margin: 3px 0; font-size: 0.88rem; }
 .liens-utiles a { color: #161514; font-weight: 600; text-underline-offset: 3px; }
+
+/* Accueil : raccourcis vers les pages outils */
+.raccourcis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: -10px 0 26px; }
+.raccourci { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: var(--r-l); border: 1.5px solid var(--trait); background: var(--blanc); color: var(--encre); text-decoration: none; transition: transform 0.15s; }
+.raccourci:hover { transform: translateY(-2px); border-color: var(--encre); }
+.raccourci .ico { font-size: 1.5rem; line-height: 1; }
+.raccourci strong { display: block; }
+.raccourci small { display: block; font-size: 0.82rem; color: var(--gris-doux); }

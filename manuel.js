@@ -23,14 +23,16 @@
 
   // Sommaire : accueil, chapitres numérotés, pages utiles
   var actif = param('c');
-  var html = '<a href="index.html"' + (page === 'accueil' ? ' class="actif"' : '') + '>Accueil</a><div class="groupe">Chapitres</div>';
+  // Les outils viennent juste après l'accueil, avant la longue liste des chapitres, pour rester visibles sans défiler
+  var html = '<a href="index.html"' + (page === 'accueil' ? ' class="actif"' : '') + '>Accueil</a>' +
+    '<div class="groupe">Outils</div>' +
+    '<a href="connaissances.html"' + (page === 'connaissances' ? ' class="actif"' : '') + '>Nouvelles connaissances</a>' +
+    '<a href="glossaire.html"' + (page === 'glossaire' ? ' class="actif"' : '') + '>Glossaire</a>' +
+    '<a href="ajouter.html"' + (page === 'ajouter' ? ' class="actif"' : '') + '>Comment ajouter une notion</a>' +
+    '<div class="groupe">Chapitres</div>';
   M.chapitres.forEach(function (c, i) {
     html += '<a href="chapitre.html?c=' + c.id + '"' + (actif === c.id ? ' class="actif"' : '') + ' style="--c:' + couleur(i) + '"><span class="num">' + (i + 1) + '</span>' + esc(c.titre) + '</a>';
   });
-  html += '<div class="groupe">Outils</div>' +
-    '<a href="glossaire.html"' + (page === 'glossaire' ? ' class="actif"' : '') + '>Glossaire</a>' +
-    '<a href="connaissances.html"' + (page === 'connaissances' ? ' class="actif"' : '') + '>Nouvelles connaissances</a>' +
-    '<a href="ajouter.html"' + (page === 'ajouter' ? ' class="actif"' : '') + '>Comment ajouter une notion</a>';
   document.getElementById('sommaire').innerHTML = html;
 
   // Petit écran : le sommaire est replié derrière le bouton ☰ ; il se ferme au choix d'un lien, avec Échap ou au clic à côté
@@ -94,6 +96,16 @@
   if (page === 'accueil') {
     var nb = M.chapitres.reduce(function (s, c) { return s + c.notions.length; }, 0);
     document.getElementById('compte').textContent = M.chapitres.length + ' chapitres · ' + nb + ' notions';
+    // Raccourcis vers les pages outils, sous l'introduction
+    var raccourcis = document.createElement('div');
+    raccourcis.className = 'raccourcis';
+    raccourcis.innerHTML = [['connaissances.html', '🚀', 'Nouvelles connaissances', 'Outils et langages à apprendre ensuite'],
+      ['glossaire.html', '📖', 'Glossaire', 'Tous les termes des fiches'],
+      ['ajouter.html', '➕', 'Comment ajouter une notion', 'Le mode d\'emploi pour enrichir le manuel']].map(function (r) {
+      return '<a class="raccourci" href="' + r[0] + '"><span class="ico" aria-hidden="true">' + r[1] + '</span><span><strong>' + r[2] + '</strong><small>' + r[3] + '</small></span></a>';
+    }).join('');
+    var heros = document.querySelector('.hero');
+    heros.parentNode.insertBefore(raccourcis, heros.nextSibling);
     document.getElementById('chapitres').innerHTML = M.chapitres.map(function (c, i) {
       return '<a class="chapitre-carte" href="chapitre.html?c=' + c.id + '" style="--c:' + couleur(i) + '"><span class="n">Chapitre ' + (i + 1) + '</span><strong>' + esc(c.titre) + '</strong><span>' + esc(c.resume) + '</span></a>';
     }).join('');
