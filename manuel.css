@@ -134,3 +134,17 @@ svg .l { stroke: var(--encre); stroke-width: 1.5; fill: none; }
   .fiche { padding: 18px 16px; }
 }
 @media print { .entete .recherche, .sommaire { display: none; } main { margin: 0; padding: 0; } body { background: #fff; } }
+
+/* Nouvelles connaissances : un groupe par famille, une carte par outil ou langage */
+.groupe-connaissances { margin: 26px 0 8px; }
+.groupe-connaissances h2 { display: flex; align-items: center; gap: 10px; }
+.groupe-connaissances h2::before { content: ""; width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; background: var(--c); }
+.connaissances { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.connaissance { display: flex; flex-direction: column; padding: 18px 20px; border-radius: var(--r-l); background: color-mix(in srgb, var(--c) 22%, var(--blanc)); color: #161514; }
+.connaissance h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 1.05rem; }
+.connaissance .ico { font-size: 1.3rem; line-height: 1; }
+.connaissance p { margin: 0 0 8px; font-size: 0.9rem; line-height: 1.45; }
+.connaissance .pourquoi { opacity: 0.85; }
+.liens-utiles { margin: auto 0 0; padding: 8px 0 0; list-style: none; border-top: 1.5px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.liens-utiles li { margin: 3px 0; font-size: 0.88rem; }
+.liens-utiles a { color: #161514; font-weight: 600; text-underline-offset: 3px; }

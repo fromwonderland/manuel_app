@@ -29,6 +29,7 @@
   });
   html += '<div class="groupe">Outils</div>' +
     '<a href="glossaire.html"' + (page === 'glossaire' ? ' class="actif"' : '') + '>Glossaire</a>' +
+    '<a href="connaissances.html"' + (page === 'connaissances' ? ' class="actif"' : '') + '>Nouvelles connaissances</a>' +
     '<a href="ajouter.html"' + (page === 'ajouter' ? ' class="actif"' : '') + '>Comment ajouter une notion</a>';
   document.getElementById('sommaire').innerHTML = html;
 
@@ -136,5 +137,26 @@
         '</tbody></table></div>';
     }
     filtre.addEventListener('input', rendre); rendre();
+  }
+
+  // Nouvelles connaissances : une carte par outil ou langage à apprendre, avec ses liens (donnees/connaissances.js)
+  if (page === 'connaissances' && window.CONNAISSANCES) {
+    var K = window.CONNAISSANCES, zoneK = document.getElementById('connaissances'), filtreK = document.getElementById('filtre');
+    document.getElementById('intro-connaissances').textContent = K.intro;
+    var rendreK = function () {
+      var q = normaliser(filtreK.value.trim());
+      var html = K.groupes.map(function (g, i) {
+        var l = g.sujets.filter(function (s) { return !q || normaliser(s.nom + ' ' + s.sert + ' ' + s.pourquoi).indexOf(q) >= 0; });
+        if (!l.length) return '';
+        return '<section class="groupe-connaissances" style="--c:' + couleur(i) + '"><h2>' + esc(g.titre) + ' <span class="muted">' + l.length + '</span></h2><div class="connaissances">' +
+          l.map(function (s) {
+            return '<article class="connaissance"><h3><span class="ico" aria-hidden="true">' + s.ico + '</span>' + esc(s.nom) + '</h3>' +
+              '<p>' + esc(s.sert) + '</p><p class="pourquoi"><strong>Pourquoi l\'apprendre :</strong> ' + esc(s.pourquoi) + '</p>' +
+              '<ul class="liens-utiles">' + s.liens.map(function (x) { return '<li><a href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + esc(x[0]) + ' ↗</a></li>'; }).join('') + '</ul></article>';
+          }).join('') + '</div></section>';
+      }).join('');
+      zoneK.innerHTML = html || '<p class="muted">Aucun sujet ne correspond.</p>';
+    };
+    filtreK.addEventListener('input', rendreK); rendreK();
   }
 })();
