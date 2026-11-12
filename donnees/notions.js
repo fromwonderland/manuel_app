@@ -281,6 +281,12 @@ git ls-remote origin                    # le serveur montre-t-il les nouveaux co
     definition: `<p><strong>CI</strong> (intégration continue) : à chaque push, une machine compile le code et lance les tests. <strong>CD</strong> (livraison ou déploiement continu) : si tout est vert, elle fabrique le paquet et l'installe sur un environnement.</p>`,
     image: `La CI, c'est le <strong>contrôle qualité</strong> en sortie d'usine : chaque pièce est vérifiée avant de quitter l'atelier. La CD, c'est le <strong>camion de livraison</strong> qui emporte les pièces validées jusqu'aux magasins (les environnements), toujours par la même route.`, icone: '🏭🚚',
     termes: [['CI', 'Intégration continue : compilation et tests automatiques à chaque push.'], ['CD', 'Livraison continue : fabrication et installation automatiques du logiciel validé.'], ['Pipeline', 'Suite d\'étapes automatiques lancée par GitLab à chaque push.']] },
+  { id: 'cicd-modeles', titre: 'Modèles de CI partagés',
+    definition: `<p>Plusieurs projets peuvent réutiliser les mêmes étapes de CI en les <strong>incluant</strong> depuis un dépôt commun (<code>include:</code> dans GitLab). Une correction profite alors à tous ; une erreur aussi.</p>`,
+    exemple: `<ul><li><strong>Fixer une version</strong> : inclure le modèle par un tag (<code>ref: v1.2.0</code>) plutôt que par une branche ; sinon, une fusion s'applique à tous les projets au pipeline suivant, sans contrôle.</li><li>Ne jamais dépendre d'une <strong>branche de travail</strong> : si elle est supprimée à la fusion, plus aucune livraison ne passe.</li><li>Un contrôle en <code>allow_failure: true</code> n'arrête jamais la chaîne : il prévient, il ne protège pas.</li><li>Ne jamais afficher la configuration qui contient un jeton (<code>cat .git/config</code>) : il apparaîtrait dans les journaux si la variable n'est pas masquée.</li></ul>`,
+    retenir: `<div class="a-retenir">Un modèle partagé se versionne comme une bibliothèque : on choisit quand on passe à la nouvelle version.</div>`,
+    termes: [['include (GitLab CI)', 'Instruction qui insère dans un pipeline des étapes écrites dans un autre fichier ou dépôt.'], ['Variable masquée', 'Variable de CI dont la valeur est remplacée par des étoiles dans les journaux.']] },
+
 
   { id: 'cicd-pipeline', titre: 'Le pipeline d\'api-clients',
     definition: `<p>api-clients n'écrit pas son pipeline lui-même : son <code>.gitlab-ci.yml</code> inclut un modèle commun à toutes les API, <code>groupe/templates-ci</code>.</p>`,
@@ -328,6 +334,24 @@ git ls-remote origin                    # le serveur montre-t-il les nouveaux co
     exemple: `<p>L'app mobile passe par <code>bff-mobile</code>, qui appelle notamment <code>api-clients</code> pour le compte client.</p>`,
     image: `Dans le restaurant, le BFF est le <strong>serveur</strong> : il prend une commande complète (« menu du jour ») et va voir plusieurs postes de cuisine (les API métier) pour composer l'assiette.`, icone: '🧑‍🍳',
     termes: [['API', 'Interface qui permet à un programme de dialoguer avec un autre.'], ['BFF', 'Backend For Frontend : API dédiée à un écran (site, app), qui assemble plusieurs API métier.'], ['API métier', 'API qui gère un seul domaine et ses règles (ex. clients).']] },
+  { id: 'mel-hexagonale', titre: 'Architecture hexagonale : ports et adaptateurs',
+    definition: `<p>L'<strong>architecture hexagonale</strong> range le code d'une API en couches : le <strong>métier</strong> au centre, qui ne connaît ni le web ni les services appelés ; autour, des <strong>adaptateurs</strong> qui le relient à l'extérieur. Le métier déclare ce dont il a besoin (un <strong>port</strong>, une interface) ; un adaptateur le réalise.</p>`,
+    schema: `<div class="flux"><span class="etape">Resource<small>contrôleur REST</small></span><span class="fleche">→</span><span class="etape">Facade<small>orchestration</small></span><span class="fleche">→</span><span class="etape">Service<small>règles de gestion</small></span><span class="fleche">→</span><span class="etape">Port<small>interface</small></span><span class="fleche">←</span><span class="etape">Adapter<small>client du service appelé</small></span></div>`,
+    exemple: `<p>Pour changer de fournisseur de cartes de fidélité, on écrit un nouvel adaptateur ; le service et ses règles ne bougent pas, et ses tests non plus.</p>`,
+    retenir: `<div class="a-retenir">Les flèches pointent vers le métier : c'est l'extérieur qui dépend du métier, jamais l'inverse.</div>`,
+    termes: [['Port', 'Interface déclarée par le métier pour ce dont il a besoin (lire un profil, créer une carte).'], ['Adaptateur', 'Code qui réalise un port en parlant à un service réel (API, base, file de messages).']] },
+
+  { id: 'mel-helm-valeurs', titre: 'Un chart Helm : valeurs, schéma et versions',
+    definition: `<p>Un chart Helm sépare les <strong>modèles</strong> (templates) des <strong>valeurs</strong>. Le fichier <code>values.yaml</code> donne les valeurs par défaut ; chaque environnement les remplace dans son propre fichier. Un <strong>schéma</strong> (<code>values.schema.json</code>) refuse les valeurs manquantes ou mal écrites avant tout déploiement.</p>`,
+    schema: `<div class="flux"><span class="etape">Modifier le chart</span><span class="fleche">→</span><span class="etape">CI<small>version x.y.z, tag, CHANGELOG</small></span><span class="fleche">→</span><span class="etape">Registre<small>chart publié</small></span><span class="fleche">→</span><span class="etape">GitOps<small>chartVersion par environnement</small></span><span class="fleche">→</span><span class="etape">Cluster</span></div>`,
+    exemple: `<ul><li>Passer un environnement à une nouvelle version : changer seulement le numéro de version du chart dans le dépôt GitOps ; revenir en arrière : remettre l'ancien.</li><li>Un modèle peut <strong>refuser</strong> un rendu : <code>fail</code> si le fuseau horaire d'une tâche planifiée manque.</li><li>Piège vu : une valeur par défaut différente dans le modèle et dans le schéma (« OnFailure » d'un côté, « Never » de l'autre).</li></ul>`,
+    termes: [['values.yaml', 'Fichier des valeurs par défaut d\'un chart Helm, remplacées par environnement.'], ['Schéma des valeurs', 'Fichier qui décrit les valeurs permises d\'un chart ; Helm refuse un rendu qui ne le respecte pas.'], ['Registre OCI', 'Dépôt d\'images et de charts au format standard des conteneurs.']] },
+
+  { id: 'mel-pod-compagnons', titre: 'Autour du conteneur : sidecar, initialisation, identité et secrets',
+    definition: `<p>Un <strong>pod</strong> Kubernetes peut contenir plusieurs conteneurs. Le conteneur principal fait le travail ; d'autres l'aident : un <strong>sidecar</strong> tourne à côté (par exemple pour monter un stockage cloud comme un dossier), un <strong>conteneur d'initialisation</strong> s'exécute jusqu'au bout avant les autres (par exemple pour attendre qu'un service soit prêt).</p>`,
+    exemple: `<ul><li><strong>Identité sans clé</strong> : le compte Kubernetes du pod est relié à un compte de service du cloud ; aucun fichier de clé n'est stocké.</li><li><strong>Secret externe</strong> : un objet <code>ExternalSecret</code> copie les mots de passe depuis un coffre (gestionnaire de secrets) dans un secret Kubernetes. Le dépôt ne contient que le <em>nom</em> des clés, jamais leurs valeurs.</li><li>Cas vu : des tâches planifiées échouaient au démarrage parce que le sidecar de stockage n'arrivait pas à joindre le serveur de métadonnées ; un conteneur d'initialisation qui attend ce serveur a réglé le problème.</li></ul>`,
+    termes: [['Sidecar', 'Conteneur secondaire lancé à côté du conteneur principal d\'un pod, pour lui rendre un service.'], ['Conteneur d\'initialisation', 'Conteneur qui s\'exécute jusqu\'au bout avant le démarrage des autres conteneurs du pod.'], ['ExternalSecret', 'Objet Kubernetes qui copie des secrets d\'un coffre externe dans un secret Kubernetes.']] },
+
 
   { id: 'mel-jd', titre: 'Plateforme JD et Couchbase',
     definition: `<p>La <strong>plateforme JD</strong> regroupe des services communs (profil, authentification, carte de fidélité) appelés par nos API ; son infrastructure est décrite dans un dépôt à part (<code>infra-jd</code>). <strong>Couchbase</strong> est une base de données NoSQL rapide, qui stocke des documents JSON ; nous l'utilisons en version hébergée (Capella, dépôt <code>infra-couchbase</code>).</p>`,
@@ -610,6 +634,33 @@ ORDER BY date_creation;</code></pre>`,
     exemple: `<p>Notre site de doc est statique : un script PowerShell lit les docs et écrit <code>recherche.js</code>, que le navigateur affiche. Pour compter les mises à jour, il faudra de même un script qui lit Git et écrit un fichier de données. Le premier vrai back-end sera la base des anomalies (Spring Boot).</p>`,
     image: `Un site statique, c'est un <strong>journal imprimé</strong> : tout est écrit à l'avance. Un back-end, c'est un <strong>guichet</strong> : on pose une question, quelqu'un calcule la réponse sur le moment.`, icone: '📰',
     termes: [['Front-end', 'Partie d\'une application qui tourne dans le navigateur.'], ['Back-end', 'Partie d\'une application qui tourne sur un serveur : calculs, base de données, droits.']] },
+  { id: 'web-stockage', titre: 'Où garder une donnée dans le navigateur',
+    definition: `<p>Un site peut garder des petites données sur le poste du lecteur, à trois endroits : le <strong>cookie</strong> (envoyé au serveur à chaque requête, environ 4 Ko), le <strong>stockage de session</strong> (effacé à la fermeture de l'onglet) et le <strong>stockage local</strong> (gardé tant que l'utilisateur ne vide pas les données du site, plusieurs Mo).</p>`,
+    schema: `<div class="table-wrap"><table><thead><tr><th>Endroit</th><th>Durée</th><th>Taille</th><th>Usage vu sur le site</th></tr></thead><tbody>
+      <tr><td>Cookie</td><td>session ou date fixée</td><td>~4 Ko</td><td>surlignages de la session</td></tr>
+      <tr><td>Stockage de session</td><td>jusqu'à la fermeture de l'onglet</td><td>quelques Mo</td><td>repli si les cookies sont refusés</td></tr>
+      <tr><td>Stockage local</td><td>tant qu'on ne l'efface pas</td><td>quelques Mo</td><td>épingles, signalements, mode sombre</td></tr></tbody></table></div>`,
+    exemple: `<ul><li>Les épingles étaient dans un cookie : il ne pouvait en garder qu'une douzaine. Passées dans le stockage local, elles n'ont plus de limite pratique.</li><li>Le mode sombre ne restait pas d'une page à l'autre : les pages étaient ouvertes depuis le disque (<code>file://</code>), et le navigateur n'y garde pas les cookies. Le stockage local, lui, fonctionne.</li></ul>`,
+    retenir: `<div class="a-retenir">Ces données restent sur <strong>un seul poste</strong> : personne d'autre ne les voit. Pour partager (signalements visibles de tous), il faut un serveur ou un autre canal.</div>`,
+    termes: [['Cookie', 'Petite donnée qu\'un site garde dans le navigateur et qui est renvoyée au serveur à chaque requête.'], ['Stockage local', 'Mémoire du navigateur propre à un site (localStorage), gardée d\'une visite à l\'autre.'], ['Stockage de session', 'Mémoire du navigateur (sessionStorage) effacée à la fermeture de l\'onglet.']] },
+
+  { id: 'web-lien-passage', titre: 'Un lien vers un passage précis',
+    definition: `<p>Une adresse peut ouvrir une page <strong>exactement sur un passage</strong>, surligné par le navigateur : c'est le <strong>fragment de texte</strong>, ajouté après <code>#:~:text=</code>. Le passage est retrouvé par son texte, pas par sa position.</p>`,
+    exemple: `<pre><code>https://exemple.fr/doc.html#:~:text=est%20le%20programme%20en%20ligne</code></pre><ul><li>Passage long : on donne seulement les premiers et les derniers mots, séparés par une virgule.</li><li>Passage présent plusieurs fois : on ajoute quelques mots avant (<code>avant-,</code>) et après (<code>,-après</code>) pour viser le bon.</li><li>Copier dans le presse-papiers : <code>navigator.clipboard.writeText()</code>, qui ne marche que sur une page sécurisée (https ou localhost) ; sinon, repli avec un champ caché et <code>document.execCommand('copy')</code>.</li></ul>`,
+    retenir: `<div class="a-retenir">Un lien par le texte survit aux changements ailleurs dans la page ; un lien par la position (« caractère 1200 ») se décale au moindre ajout.</div>`,
+    termes: [['Fragment de texte', 'Fin d\'adresse (#:~:text=…) qui fait ouvrir une page sur un passage précis, surligné.'], ['Presse-papiers', 'Mémoire temporaire du système où va un texte copié, avant d\'être collé.']] },
+
+  { id: 'web-accessibilite', titre: 'Lisible pour tous : contraste, info-bulles, mode sombre',
+    definition: `<p>Une page est <strong>accessible</strong> quand chacun peut la lire et s'en servir : avec une mauvaise vue, au clavier, au doigt. Trois réflexes vus sur le site : un <strong>contraste</strong> suffisant, des <strong>info-bulles</strong> qui s'ouvrent aussi au clavier et au toucher, un <strong>mode sombre</strong> appliqué sans clignotement.</p>`,
+    exemple: `<ul><li><strong>Contraste</strong> : rapport de luminosité entre le texte et son fond, de 1 à 21. Il faut au moins <strong>4,5</strong> pour un texte courant. Un bouton noir écrit en noir (rapport 1) est illisible ; blanc sur noir donne 18.</li><li><strong>Info-bulle</strong> : l'infobulle native (<code>title</code>) est lente, coupée et invisible au clavier. Une info-bulle maison s'ouvre au survol, au focus (<kbd>Tab</kbd>) et au premier appui sur téléphone, se ferme avec <kbd>Échap</kbd>, et est reliée au mot par <code>aria-describedby</code>.</li><li><strong>Mode sombre sans clignotement</strong> : le choix est appliqué par une ligne de script placée dans le <code>&lt;head&gt;</code>, avant le premier affichage ; s'il est appliqué en fin de page, la page apparaît un instant en clair.</li></ul>`,
+    termes: [['Accessibilité', 'Fait qu\'une page soit utilisable par tous : vue faible, clavier, toucher, lecteur d\'écran.'], ['Ratio de contraste', 'Rapport de luminosité entre un texte et son fond, de 1 (aucun écart) à 21 (noir sur blanc).'], ['aria-describedby', 'Attribut HTML qui relie un élément au texte qui le décrit, lu par les lecteurs d\'écran.']] },
+
+  { id: 'web-schemas', titre: 'Des schémas sans croisement',
+    definition: `<p>Dans un schéma, une flèche qui en <strong>croise</strong> une autre, qui <strong>traverse</strong> une bulle ou qui <strong>barre</strong> un texte rend la lecture fausse ou pénible. La règle : aucune flèche croisée, aucune bulle traversée, aucun texte qui déborde de sa bulle.</p>`,
+    exemple: `<ol><li>Rapprocher les bulles qui se parlent, ou en déplacer une à côté d'une autre.</li><li>Faire passer une flèche <strong>en L</strong> par un couloir libre ou par le bord du schéma, au lieu d'une diagonale.</li><li>Élargir une bulle dont le texte déborde, ou agrandir tout le schéma.</li></ol><p>Pour vérifier sur beaucoup de schémas, un script peut mesurer chaque flèche dans le navigateur et signaler les croisements.</p>`,
+    image: `C'est comme un plan de métro : les lignes se croisent seulement aux stations, jamais au milieu d'un nom de station.`, icone: '🚇',
+    termes: [['Flèche en L', 'Flèche faite de segments horizontaux et verticaux, qui contourne les obstacles au lieu de les couper.']] },
+
 
   { id: 'web-http', titre: 'Les codes HTTP',
     definition: `<p>Chaque réponse d'une API commence par un code à 3 chiffres. Le premier chiffre dit qui a raison : <strong>2xx</strong> tout va bien, <strong>4xx</strong> la demande est fautive, <strong>5xx</strong> le serveur a un problème.</p>`,
@@ -692,6 +743,11 @@ ORDER BY date_creation;</code></pre>`,
 project = PROJ AND created &gt;= "2024-10-22"</code></pre><p>C'est ce type de requête qui a servi à vérifier la date des tickets cités dans la doc api-clients.</p>`,
     termes: [['JQL', 'Jira Query Language : langage de recherche des tickets Jira.']] }
 ,
+  { id: 'outils-taille-code', titre: 'Taille d\'un dépôt et lignes de code',
+    definition: `<p>La <strong>taille d'un dépôt Git</strong> compte tout son historique, y compris les gros fichiers ajoutés puis supprimés. Elle ne dit donc presque rien de la quantité de code d'aujourd'hui. Pour compter les <strong>lignes de code</strong>, on lit seulement les fichiers actuels.</p>`,
+    exemple: `<ul><li>Clone léger : <code>git clone --depth 1 --filter=blob:limit=1m</code> récupère la dernière version, sans historique ni gros fichiers.</li><li>On ne garde que les fichiers de code (dans <code>src/</code> par exemple), sans les dépendances (<code>node_modules</code>), les fichiers générés ni les fichiers minifiés.</li><li>Cas vu : 10 Go de dépôts, dont trois à eux seuls font 9,5 Go ; le code utile des familles applicatives tenait en environ 210 000 lignes.</li></ul>`,
+    termes: [['Clone superficiel', 'Copie d\'un dépôt Git limitée aux derniers commits (--depth), sans tout l\'historique.']] },
+
   { id: 'outils-capture', titre: 'Capturer une page sans l\'afficher',
     definition: `<p>Un navigateur peut tourner <strong>sans fenêtre</strong> (mode headless) et enregistrer une capture d'écran d'une page : utile quand la fenêtre est masquée ou pour une capture de taille précise.</p>`,
     exemple: `<pre><code>msedge --headless=new --window-size=1400,2600 --screenshot=page.png file:///C:/…/site/index.html</code></pre>
@@ -718,6 +774,25 @@ project = PROJ AND created &gt;= "2024-10-22"</code></pre><p>C'est ce type de re
     exemple: `<p>« Anomalie » était défini dans deux docs avec deux textes différents : le glossaire affichait 152 termes au lieu de 150. Le script d'index signale maintenant ces écarts.</p>`,
     image: `C'est le principe du <strong>dictionnaire unique</strong> de la classe : tout le monde ouvre le même, donc tout le monde parle de la même chose.`, icone: '📖',
     termes: [['Source de vérité unique', 'Un seul endroit fait référence pour une information ; les autres le recopient.']] },
+  { id: 'doc-bug', titre: 'Erreur, bug et défaillance',
+    definition: `<p>Définition de référence (ISTQB, reprise par la norme ISO/IEC/IEEE 24765) : un <strong>défaut</strong>, ou <strong>bug</strong>, est une imperfection ou un manque dans un logiciel, qui fait qu'il ne répond pas à ses exigences ou à ses spécifications. En français, on recommande « <strong>bogue</strong> ».</p>`,
+    schema: `<div class="flux"><span class="etape">Erreur<small>la faute humaine</small></span><span class="fleche">→</span><span class="etape">Défaut (bug)<small>sa trace dans le code</small></span><span class="fleche">→</span><span class="etape">Défaillance<small>l'effet visible à l'exécution</small></span></div>`,
+    exemple: `<p>Une option mal orthographiée dans le code (<code>--enivronment-code</code>) est un défaut ; la commande inutilisable qui en résulte est la défaillance. Dans une doc, un bug <em>probable</em> repéré en lisant le code est noté « Déduction, à confirmer par un test » : on ne l'a pas vu se produire.</p>`,
+    termes: [['Défaut', 'Imperfection ou manque dans un logiciel qui l\'empêche de répondre à ses exigences (bug, bogue).'], ['Défaillance', 'Effet visible d\'un défaut quand il s\'exécute : plantage, résultat faux.']] },
+
+  { id: 'doc-mode-emploi', titre: 'Le commun une fois, le propre à chaque page',
+    definition: `<p>Quand un même texte se répète dans chaque page (comment lire, légende, définitions de base), on le place <strong>une seule fois</strong> dans un guide commun, et chaque page n'en garde qu'un lien. Ce qui est <strong>propre</strong> à la page (ce qu'elle couvre, ses sources, ses limites) reste dans la page.</p>`,
+    exemple: `<p>Le « mode d'emploi » répété dans chaque doc est parti dans le guide du site. Ce que chaque doc couvre et ses limites sont passés dans sa dernière annexe, « Sources et limites ». Un script a fait le tri pour toutes les docs d'un coup, en signalant tout lien qui aurait été perdu.</p>`,
+    retenir: `<div class="a-retenir">Un texte copié dix fois sera corrigé une fois et oublié neuf fois.</div>` },
+
+  { id: 'doc-ancrage', titre: 'Repérer un passage : par position ou par texte',
+    definition: `<p>Pour retrouver un passage d'une page (surlignage, épingle, signalement), on peut noter sa <strong>position</strong> (du caractère 1200 au 1260) ou son <strong>texte</strong>, avec quelques mots avant et après pour le situer.</p>`,
+    schema: `<div class="table-wrap"><table><thead><tr><th>Changement de la page</th><th>Par position</th><th>Par texte</th></tr></thead><tbody>
+      <tr><td>Ajout après le passage</td><td>rien ne bouge</td><td>rien ne bouge</td></tr>
+      <tr><td>Ajout avant le passage</td><td>le repère glisse</td><td>retrouvé</td></tr>
+      <tr><td>Réécriture du passage</td><td>tombe sur un autre texte</td><td>introuvable, et on le sait</td></tr></tbody></table></div>`,
+    exemple: `<p>Un titre allongé de 41 caractères a fait glisser d'autant un signalement placé juste après. Choix retenu : les surlignages personnels peuvent se perdre ; les anomalies, visibles de tous, seront repérées par leur texte.</p>` },
+
 
   { id: 'doc-anomalies', titre: 'Les anomalies',
     definition: `<p>Une <strong>anomalie</strong> est un point à vérifier dans une doc. Trois types : <strong>incohérence</strong> (le code dit autre chose que Jira ou Confluence), <strong>chiffre à vérifier</strong>, <strong>information manquante</strong>. Une anomalie traitée n'est jamais supprimée : elle passe dans le tableau « traitées ».</p>`,
@@ -737,7 +812,7 @@ project = PROJ AND created &gt;= "2024-10-22"</code></pre><p>C'est ce type de re
     retenir: `<div class="attention">Un constat sûr de lui n'est pas un constat vérifié.</div>` },
 
   { id: 'doc-deux-relectures', titre: 'Deux relectures par page',
-    definition: `<p>Depuis le 05/11/2026, chaque page de doc est relue <strong>deux fois</strong> à la fin de sa rédaction, chaque fois par un agent <strong>indépendant</strong> : il reçoit la page, le code, les sources et les règles de rédaction, mais pas le raisonnement de celui qui a écrit.</p>`,
+    definition: `<p>Depuis le 05/11/2026, chaque page de doc est relue <strong>deux fois</strong> à la fin de sa rédaction, chaque fois par un agent <strong>indépendant</strong> : il reçoit la page, le code, les sources et les règles de rédaction, mais pas le raisonnement de celui qui a écrit.</p><div class="attention"><strong>Mise à jour (10/11/2026) :</strong> ces relectures sont <strong>reportées</strong>. Elles coûtent cher, et la doc change encore à chaque passage ; elles reprendront quand la mise à jour automatique de la doc sera en place. D'ici là, chaque doc dit dans ses limites qu'elle n'a pas été relue.</div>`,
     schema: `<div class="flux"><span class="etape">Rédaction</span><span class="fleche">→</span><span class="etape">Relecture 1<small>erreurs et fausses informations</small></span><span class="fleche">→</span><span class="etape">Relecture 2<small>clarté et erreurs restantes</small></span><span class="fleche">→</span><span class="etape">Note sur 20<small>dans le message de commit</small></span></div>`,
     exemple: `<p>Sur une doc de batchs, la première relecture a trouvé qu'une commande en erreur sortait quand même avec le code 0, et qu'un rejeu n'était pas « sans effet » comme écrit. La seconde relit la page corrigée : phrases, enchaînement, sigles, répétitions, et erreurs créées par les corrections. Chaque constat est vérifié à la source avant d'être appliqué.</p>`,
     image: `On voit mal ses propres fautes : l'œil lit ce qu'on a <em>voulu</em> écrire. Un relecteur qui n'a pas écrit le texte lit ce qui est <em>vraiment</em> écrit.`, icone: '👀',
