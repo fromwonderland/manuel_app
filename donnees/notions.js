@@ -253,7 +253,19 @@ git ls-remote origin                    # le serveur montre-t-il les nouveaux co
     definition: `<p>Une ligne <code>Co-Authored-By: Nom &lt;adresse&gt;</code> à la fin d'un message de commit déclare un second auteur. GitHub la lit : si l'adresse correspond à un compte, ce compte apparaît dans la liste <strong>Contributors</strong> du dépôt. Les <strong>collaborateurs</strong> sont autre chose : les personnes qui ont accès au dépôt.</p>`,
     exemple: `<p>Après la réécriture des messages, l'API de GitHub ne listait plus qu'un contributeur, mais la page web en affichait encore deux : cet encart est calculé à part et gardé en cache. Il se met à jour tout seul, parfois après plus d'un jour. Changer la branche par défaut puis la remettre force souvent le recalcul.</p>`,
     retenir: `<div class="a-retenir">Pour savoir ce que contient vraiment un dépôt, on interroge ses données (API, <code>git log</code>), pas un affichage qui peut être en retard.</div>`,
-    termes: [['Co-auteur (commit)', 'Second auteur déclaré par une ligne Co-Authored-By dans le message d\'un commit.'], ['Contributeur', 'Compte qui apparaît comme auteur ou co-auteur de commits d\'un dépôt.'], ['Collaborateur', 'Personne qui a reçu un accès à un dépôt.']] }
+    termes: [['Co-auteur (commit)', 'Second auteur déclaré par une ligne Co-Authored-By dans le message d\'un commit.'], ['Contributeur', 'Compte qui apparaît comme auteur ou co-auteur de commits d\'un dépôt.'], ['Collaborateur', 'Personne qui a reçu un accès à un dépôt.']] },
+
+  { id: 'git-stockage', titre: 'Comment Git garde l\'historique',
+    definition: `<p>À chaque commit, Git enregistre une <strong>copie complète</strong> de chaque fichier modifié, compressée et rangée sous une empreinte (un <strong>blob</strong>). Deux fichiers identiques, ou un fichier non modifié, ne sont stockés qu'une fois : c'est la <strong>déduplication</strong>. Les différences qu'affiche <code>git diff</code> sont <em>calculées à l'affichage</em>, pas stockées telles quelles.</p>`,
+    exemple: `<p>Git regroupe ensuite ces objets dans des <strong>packfiles</strong> où il ne garde, entre versions proches d'un même fichier, que les <strong>deltas</strong> (les écarts). Une page de texte retouchée coûte alors quelques centaines d'octets, pas une copie entière. C'est pourquoi des millions de dépôts de texte tiennent sans saturer le stockage.</p>`,
+    retenir: `<div class="a-retenir">Chaque version reste récupérable. Un secret commis une seule fois reste donc dans l'historique, même « supprimé » ensuite (voir « Chercher les secrets dans l\'historique »).</div>`,
+    termes: [['Blob', 'Objet Git qui contient une version complète et compressée d\'un fichier, identifiée par une empreinte.'], ['Delta', 'Écart entre deux versions, que Git stocke à la place d\'une copie entière quand les versions sont proches.'], ['Packfile', 'Fichier où Git regroupe et compresse ses objets, en gardant surtout des deltas.']] },
+
+  { id: 'git-binaire', titre: 'Fichier texte, fichier binaire et Git LFS',
+    definition: `<p>Un fichier <strong>texte</strong> (code, HTML, Markdown) est lisible ligne à ligne : Git compare les lignes et stocke de petits deltas. Un fichier <strong>binaire</strong> (image, PDF, vidéo, exécutable, archive) est une suite d'octets qu'un programme précis interprète ; une petite retouche change presque tous les octets, donc pas de petit delta : Git doit re-stocker le fichier presque entier à chaque version.</p>`,
+    exemple: `<p>Dans le groupe GitLab e-commerce, le code pèse environ 9,9 Go, mais le total atteint 61,5 Go : l'écart vient surtout du binaire — images de conteneurs (registre Docker), artefacts de CI et gros fichiers déportés par <strong>Git LFS</strong>.</p>`,
+    retenir: `<div class="a-retenir">Les gros binaires gonflent l'historique : on les déporte avec Git LFS, qui les range à part et ne laisse qu'un pointeur dans le dépôt.</div>`,
+    termes: [['Fichier binaire', 'Fichier non lisible comme du texte (image, PDF, vidéo…), interprété par un programme précis.'], ['Git LFS', 'Extension de Git qui stocke les gros fichiers binaires à part, pour ne pas alourdir l\'historique.']] }
 
   ] },
 
@@ -317,6 +329,19 @@ git ls-remote origin                    # le serveur montre-t-il les nouveaux co
     exemple: `<p>L'image d'api-clients part de <code>eclipse-temurin:21-jre</code> (Java 21) et lance <code>api-clients.jar</code> sur le port 8080.</p>`,
     image: `L'image est un <strong>plat sous vide</strong> : recette et ingrédients emballés ensemble. Le conteneur, c'est le plat réchauffé et servi. On peut en servir autant qu'on veut, ils ont tous le même goût.`, icone: '📦',
     termes: [['Image Docker', 'Paquet figé contenant une application et tout ce qu\'il lui faut pour tourner.'], ['Conteneur', 'Image Docker en cours d\'exécution, isolée du reste de la machine.']] },
+
+  { id: 'mel-dockerfile', titre: 'Le Dockerfile : la recette de l\'image',
+    definition: `<p>Le <strong>Dockerfile</strong> est un fichier texte, à la racine du dépôt, qui décrit comment construire l'image, étape par étape. Ce sont les <strong>développeurs</strong> de l'application qui l'écrivent (souvent aidés de l'équipe plateforme) : eux seuls savent de quoi l'app a besoin pour tourner. Il est versionné avec le code.</p>`,
+    exemple: `<pre><code>FROM node:24            # partir de Node 24
+WORKDIR /app           # se placer dans /app
+COPY package.json .    # copier la liste des dépendances
+RUN npm install        # les installer
+COPY . .               # copier le code
+EXPOSE 3000            # ouvrir le port 3000
+CMD ["node", "serveur.js"]   # lancer le serveur</code></pre>
+<p>Puis : <code>docker build -t ma-doc .</code> construit l'image, <code>docker run -p 3000:3000 ma-doc</code> lance un conteneur. En entreprise, la CI fait le <code>build</code> à chaque commit et Kubernetes lance les conteneurs : on ne tape presque jamais ces commandes à la main.</p>`,
+    retenir: `<div class="a-retenir">On écrit le code et le Dockerfile ; la CI/CD et Kubernetes font le reste.</div>`,
+    termes: [['Dockerfile', 'Fichier texte qui décrit, étape par étape, comment construire une image Docker.']] },
 
   { id: 'mel-helm', titre: 'Charts Helm',
     definition: `<p>Un <strong>chart Helm</strong> est un modèle de déploiement Kubernetes : quelle image lancer, combien d'exemplaires, quelle configuration. Les valeurs changent par environnement.</p>`,
@@ -475,6 +500,11 @@ java -jar outil-prix.jar nettoyer</code></pre>
     image: `Environnement virtuel = <strong>un tiroir</strong> rangé à part. Docker = <strong>une chambre</strong> dans la maison. Machine virtuelle = <strong>une maison voisine</strong>.`, icone: '🏠',
     termes: [['Machine virtuelle', 'Ordinateur simulé, avec son propre système, qui tourne dans le PC.'], ['Environnement virtuel', 'Dossier isolé de librairies pour un projet (ex. venv en Python).']] },
 
+  { id: 'iso-histoire-vm', titre: 'D\'où viennent les machines virtuelles',
+    definition: `<p>Les machines virtuelles sont nées chez <strong>IBM dans les années 1960</strong>, sur les gros ordinateurs (mainframes), qui coûtaient cher et ne servaient qu'un programme à la fois. IBM a conçu un système (CP/CMS, puis <strong>VM/370</strong> en 1972) qui découpait une machine en plusieurs « machines virtuelles », chacune se croyant seule, pour la partager entre plusieurs personnes.</p>`,
+    exemple: `<p>L'idée est restée discrète, puis a explosé vers 2000 (VMware) quand les serveurs sont devenus assez puissants pour en faire tourner beaucoup : c'est la base du cloud. Les conteneurs sont l'étape suivante, plus légère, en partageant le noyau au lieu de simuler un ordinateur entier.</p>`,
+    retenir: `<div class="a-retenir">VM : partager une grosse machine en machines isolées. Conteneur : la même idée, allégée, pour une application.</div>` },
+
   { id: 'iso-limites', titre: 'Ce que Docker ne protège pas',
     definition: `<p>Un conteneur partage le noyau du PC : ce n'est pas une barrière de sécurité totale.</p>`,
     schema: `<ul><li>Les <strong>dossiers partagés</strong> (volumes) : le conteneur peut les modifier ou les effacer.</li><li>Le <strong>réseau</strong> : il peut appeler Internet et le réseau local.</li><li>Les <strong>droits élevés</strong> (<code>--privileged</code>) : ils lui donnent presque la main sur le PC.</li><li>Les <strong>images douteuses</strong> : une image téléchargée peut contenir un programme malveillant.</li></ul>`,
@@ -495,6 +525,18 @@ java -jar outil-prix.jar nettoyer</code></pre>
     definition: `<p>Un site <strong>statique</strong> n'est fait que de fichiers (HTML, CSS, JS) envoyés tels quels : pas de serveur qui exécute du code, pas de base de données. Il y a donc beaucoup moins de portes d'entrée pour un attaquant.</p>`,
     exemple: `<p>Le site de doc et ce manuel sont statiques. Le risque principal reste le contenu affiché : on n'y met jamais de secret.</p>`,
     termes: [['Site statique', 'Site fait uniquement de fichiers envoyés tels quels, sans code exécuté côté serveur.']] },
+
+  { id: 'sec-console', titre: 'La console du navigateur révèle-t-elle une faille ?',
+    definition: `<p>La <strong>console</strong> (touche F12) montre ce qui s'exécute <em>dans votre navigateur</em> : le code JavaScript, les requêtes, les messages d'erreur que le site vous a déjà envoyés. Tout visiteur voit la même chose : ce n'est pas un accès caché, et le site ne peut pas l'empêcher. La sécurité repose sur le <strong>serveur</strong>, pas sur le secret de ce qui tourne dans le navigateur.</p>`,
+    exemple: `<p>Ces messages peuvent quand même <em>aider</em> un attaquant : versions des bibliothèques (failles connues), adresses d'API internes, traces d'erreur détaillées (chemins, requêtes SQL), ou pire, un secret laissé dans un <code>console.log</code>. Un site sérieux n'envoie au navigateur qu'un message d'erreur générique et retire ses <code>console.log</code> de débogage.</p>`,
+    retenir: `<div class="a-retenir">Voir les erreurs n'est pas une faille. Tout ce qui part vers le navigateur est public : on n'y met jamais de secret ni de détail d'erreur du serveur.</div>`,
+    termes: [['Console (navigateur)', 'Outil de développement du navigateur (F12) qui affiche le code, les requêtes et les erreurs côté client.']] },
+
+  { id: 'sec-phishing', titre: 'Faux sites et hameçonnage',
+    definition: `<p>Copier l'apparence d'un site est à la portée de tous : pour s'afficher, une page doit envoyer son HTML, son CSS et ses images, que n'importe qui peut enregistrer. Ce n'est donc pas une faille technique. Un faux site (fausse page d'un service public, par exemple) ne possède ni le serveur, ni les données, ni l'adresse officielle : il se contente d'<strong>enregistrer ce que la victime tape</strong>.</p>`,
+    exemple: `<p>L'arnaque (<strong>hameçonnage</strong>) repose sur la personne, pas sur la technique : un SMS ou un e-mail urgent (« remboursement en attente », « colis bloqué ») avec un lien vers une adresse proche de la vraie (<code>impots-gouv-remboursement.com</code>). La victime regarde la page, pas l'adresse.</p>`,
+    retenir: `<div class="attention">Toujours vérifier l'adresse avant de saisir quoi que ce soit (les sites de l'État finissent par <code>.gouv.fr</code>) ; ne pas suivre un lien reçu, taper soi-même l'adresse ; se méfier de l'urgence.</div>`,
+    termes: [['Hameçonnage (phishing)', 'Arnaque qui imite un site ou un message de confiance pour voler des informations saisies par la victime.']] },
 
   { id: 'sec-sql', titre: 'Injection SQL',
     definition: `<p>L'<strong>injection SQL</strong> consiste à taper du code SQL dans un champ de formulaire pour que le serveur l'exécute.</p>`,
@@ -579,7 +621,13 @@ ORDER BY date_creation;</code></pre>`,
     definition: `<p>Idée de projet pour remplacer le circuit de commentaires Confluence : une petite application <strong>Spring Boot</strong> (Java) avec une base <strong>SQLite</strong>, qui enregistre les anomalies signalées sur les docs et leur statut.</p>`,
     schema: `<div class="flux"><span class="etape">Page de doc<small>bouton « signaler »</small></span><span class="fleche">→</span><span class="etape">API Spring Boot<small>reçoit l'anomalie</small></span><span class="fleche">→</span><span class="etape">SQLite<small>table anomalies</small></span><span class="fleche">→</span><span class="etape">Correction<small>statut « traitée »</small></span></div>`,
     retenir: `<div class="a-retenir">SQLite suffit pour démarrer ; si beaucoup de monde l'utilise, on passera à PostgreSQL sans changer la logique.</div>`,
-    termes: [['Spring Boot', 'Cadre Java pour créer rapidement des API et des applications web.']] }
+    termes: [['Spring Boot', 'Cadre Java pour créer rapidement des API et des applications web.']] },
+
+  { id: 'bdd-sauvegarde', titre: 'Les commits ne sauvegardent pas la base',
+    definition: `<p>Pousser son code sur GitLab protège bien le <strong>code</strong> et son historique, hors du PC. Mais une <strong>base de données</strong> vit en continu et n'est pas dans Git : signalements, comptes, données changeantes. Si la base est perdue ou chiffrée par un rançongiciel, le dépôt ne la ramène pas.</p>`,
+    exemple: `<p>Il faut donc une vraie sauvegarde de la base : un export automatique régulier, chiffré, rangé <em>ailleurs</em> que sur le serveur. La plupart des hébergeurs cloud le proposent en une case à cocher (instantanés quotidiens). Et on teste une restauration : une sauvegarde jamais restaurée ne vaut rien.</p>`,
+    retenir: `<div class="a-retenir">Git sauvegarde le code ; la base a besoin de sa propre sauvegarde. Les secrets, eux, ne vont ni dans Git ni dans la base, mais dans un coffre.</div>`,
+    termes: [['Sauvegarde', 'Copie séparée et datée des données, rangée ailleurs, pour restaurer après une perte.'], ['Rançongiciel', 'Logiciel malveillant qui chiffre les données et réclame une rançon pour les rendre.']] }
   ] },
 
 // ─────────────────────────────────────────────── 8. Web
