@@ -5,10 +5,9 @@
   --code: #f3efe7; --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
   --sidebar-w: 270px; --r-xl: 28px; --r-l: 20px;
 }
-@media (prefers-color-scheme: dark) {
-  :root { --creme: #1b1a18; --encre: #f3efe7; --gris-doux: #a9a397; --trait: #34312c; --blanc: #252320;
+/* Mode sombre : choisi avec le bouton lune / soleil (clair par défaut), appliqué par la classe theme-sombre */
+html.theme-sombre { color-scheme: dark; --creme: #1b1a18; --encre: #f3efe7; --gris-doux: #a9a397; --trait: #34312c; --blanc: #252320;
     --menthe: #1f3a2e; --lilas: #2f2748; --beurre: #4a4017; --peche: #4a2c1e; --ciel: #1d3248; --rose: #4a2133; --code: #2d2a26; }
-}
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 body { margin: 0; background: var(--creme); color: var(--encre); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
@@ -156,3 +155,9 @@ svg .l { stroke: var(--encre); stroke-width: 1.5; fill: none; }
 .raccourci .ico { font-size: 1.5rem; line-height: 1; }
 .raccourci strong { display: block; }
 .raccourci small { display: block; font-size: 0.82rem; color: var(--gris-doux); }
+/* Bouton lune / soleil, en bas à droite */
+.bouton-theme { position: fixed; z-index: 30; right: 18px; bottom: 18px; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer; background: #161514; color: #f7f3ec; box-shadow: 3px 3px 0 #fdd9c6; transition: transform 0.2s; }
+.bouton-theme:hover, .bouton-theme:focus-visible { transform: rotate(-15deg); outline: none; }
+html.theme-sombre .bouton-theme { background: #f7f3ec; color: #161514; box-shadow: 3px 3px 0 #6b4a3a; }
+@media print { .bouton-theme { display: none; } }
