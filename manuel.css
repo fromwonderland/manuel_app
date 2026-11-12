@@ -6,8 +6,8 @@
   --sidebar-w: 270px; --r-xl: 28px; --r-l: 20px;
 }
 /* Mode sombre : choisi avec le bouton lune / soleil (clair par défaut), appliqué par la classe theme-sombre */
-html.theme-sombre { color-scheme: dark; --creme: #1b1a18; --encre: #f3efe7; --gris-doux: #a9a397; --trait: #34312c; --blanc: #252320;
-    --menthe: #1f3a2e; --lilas: #2f2748; --beurre: #4a4017; --peche: #4a2c1e; --ciel: #1d3248; --rose: #4a2133; --code: #2d2a26; }
+html.theme-sombre { color-scheme: dark; --creme: #2b2926; --encre: #f5f1ea; --gris-doux: #c9c2b5; --trait: #4d4842; --blanc: #36332f;
+    --menthe: #2f5646; --lilas: #463b6b; --beurre: #625628; --peche: #6a4331; --ciel: #2d4b6b; --rose: #66344b; --code: #403c37; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 body { margin: 0; background: var(--creme); color: var(--encre); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
