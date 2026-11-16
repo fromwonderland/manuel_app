@@ -588,7 +588,13 @@ git show --stat &lt;commit&gt;                                 # fichiers touch�
   { id: 'sec-donnees-perso', titre: 'Données personnelles : le strict nécessaire',
     definition: `<p>Le <strong>RGPD</strong> demande de ne collecter que les données personnelles utiles au but poursuivi (minimisation). Pour l'annuaire des collaborateurs de la doc : le nom, l'équipe, le statut (présent ou parti) et le remplaçant suffisent.</p>`,
     exemple: `<p>L'app de présence de l'entreprise sait qui est absent tel jour : c'est une donnée RH dont la doc n'a pas besoin, on ne la branche donc pas. Pour savoir si quelqu'un a quitté l'entreprise, le statut « actif » du compte Jira suffit.</p>`,
-    termes: [['RGPD', 'Règlement européen sur la protection des données personnelles.'], ['Minimisation', 'Principe du RGPD : ne collecter que les données nécessaires au but poursuivi.']] }
+    termes: [['RGPD', 'Règlement européen sur la protection des données personnelles.'], ['Minimisation', 'Principe du RGPD : ne collecter que les données nécessaires au but poursuivi.']] },
+  { id: 'web-xss', titre: 'Afficher un texte saisi sans danger : échapper le HTML',
+    definition: `<p>Quand une page affiche un texte écrit par un utilisateur (un commentaire, un nom de lien), elle doit le traiter comme du <strong>texte</strong>, jamais comme du HTML. Sinon, un texte qui contient <code>&lt;script&gt;</code> ou un lien <code>javascript:</code> serait exécuté par le navigateur de tous ceux qui ouvrent la page : c'est une faille <strong>XSS</strong>.</p>
+<p>Deux réflexes : insérer le texte avec <code>textContent</code> (ou l'échapper : <code>&lt;</code> devient <code>&amp;lt;</code>) et n'accepter que des adresses qui commencent par <code>http://</code> ou <code>https://</code>.</p>`,
+    exemple: `<p>Dans notre site, la relecture du code du 13/11/2026 a vérifié que les commentaires des signalements d'anomalie, les noms et les URL de liens sont bien insérés comme du texte, et que seules les adresses <code>http(s)</code> sont acceptées.</p>`,
+    retenir: `<div class="a-retenir">Ce qu'un utilisateur écrit s'affiche comme du texte, jamais comme du code.</div>`,
+    termes: [['XSS', 'Faille où un texte saisi par un utilisateur est exécuté comme du code dans la page des autres visiteurs.'], ['Échapper', 'Remplacer les caractères spéciaux du HTML (&lt;, &gt;, &amp;, guillemets) pour qu\'ils s\'affichent au lieu d\'être interprétés.']] }
   ] },
 
 // ─────────────────────────────────────────────── 7. Bases de données
@@ -738,7 +744,28 @@ ORDER BY date_creation;</code></pre>`,
 <li><strong>Presse-papiers :</strong> <code>navigator.clipboard.writeText(texte)</code> copie un texte ; le navigateur ne l'autorise qu'après un vrai clic, d'où une méthode de secours.</li>
 <li><strong>Courbe SVG :</strong> <code>&lt;path d="M x1,y1 Q cx,cy x2,y2"&gt;</code> trace une courbe qui part de (x1,y1), est attirée par le point de contrôle (cx,cy) et arrive en (x2,y2) : ce sont les branches du nouvel arbre.</li>
 </ul>`,
-    termes: [['Data URI', 'Fichier (image, police…) écrit directement dans le code sous forme de texte, au lieu d\'un fichier séparé.'], ['Courbe de Bézier', 'Courbe définie par un point de départ, un point d\'arrivée et des points de contrôle qui l\'attirent.']] }
+    termes: [['Data URI', 'Fichier (image, police…) écrit directement dans le code sous forme de texte, au lieu d\'un fichier séparé.'], ['Courbe de Bézier', 'Courbe définie par un point de départ, un point d\'arrivée et des points de contrôle qui l\'attirent.']] },
+  { id: 'web-retour-ligne', titre: 'Passer à la ligne sans couper les mots',
+    definition: `<p>Trois règles CSS décident où une ligne trop longue se coupe :</p>
+<ul>
+<li><code>word-break: break-all</code> coupe <strong>n'importe où</strong>, même au milieu d'un mot court : à éviter pour du texte ;</li>
+<li><code>overflow-wrap: anywhere</code> coupe aussi n'importe où, et rend en plus le bloc plus étroit qu'il ne devrait dans une grille ;</li>
+<li><code>overflow-wrap: break-word</code> ne coupe un mot <strong>que s'il est trop long pour tenir seul</strong> sur une ligne (un nom de fichier, une URL) : c'est le bon choix pour du texte.</li>
+</ul>
+<p>Dans une grille ou une boîte flexible, un élément ne se réduit pas en dessous de son plus long mot : il faut lui donner <code>min-width: 0</code> pour qu'il reste dans sa colonne.</p>`,
+    exemple: `<p>Le 13/11/2026, les cartes de la page Anomalies coupaient les mots au milieu (<code>break-all</code> sur leur titre) ; elles utilisent maintenant <code>overflow-wrap: break-word</code> et <code>min-width: 0</code>.</p>`,
+    retenir: `<div class="a-retenir">Pour du texte : <code>overflow-wrap: break-word</code>, jamais <code>word-break: break-all</code>.</div>`,
+    termes: [['overflow-wrap', 'Règle CSS qui dit si et où un mot trop long peut être coupé pour passer à la ligne.']] },
+
+  { id: 'web-webhook', titre: 'Être prévenu plutôt que vérifier : le webhook',
+    definition: `<p>Pour savoir si une page Confluence ou un ticket Jira a changé, il y a deux façons de faire :</p>
+<ul>
+<li><strong>aller voir régulièrement</strong> (une tâche planifiée qui relit les sources chaque jour) : simple, mais on apprend le changement en retard et on relit souvent pour rien ;</li>
+<li><strong>se faire prévenir</strong> : l'outil appelle lui-même une adresse de notre application à chaque modification. C'est un <strong>webhook</strong>. Il demande un serveur en ligne pour recevoir l'appel.</li>
+</ul>`,
+    exemple: `<p>Pour la doc, la question reste ouverte (phase future du 13/11/2026) : comment tenir compte d'un ticket ou d'une page modifiés sans aucun commit ? Commande à la main, relecture planifiée, webhook ou bouton dans l'app. Un terminal intégré à l'app est écarté : il permettrait à n'importe quel lecteur de lancer des commandes.</p>`,
+    retenir: `<div class="a-retenir">Vérifier = on demande ; webhook = on est prévenu. Le webhook est plus rapide mais demande un serveur.</div>`,
+    termes: [['Webhook', 'Appel envoyé automatiquement par un outil vers une adresse choisie quand un événement se produit.'], ['Tâche planifiée', 'Programme lancé automatiquement à heure fixe (chaque jour, chaque semaine).']] }
   ] },
 
 // ─────────────────────────────────────────────── M
@@ -893,7 +920,25 @@ project = PROJ AND created &gt;= "2024-10-22"</code></pre><p>C'est ce type de re
     definition: `<p>Le titre d'un ticket est écrit à sa création ; la description, elle, dit ce qui a vraiment été décidé. Les deux divergent souvent, et seule la description permet de relier un commit à une règle ou à un choix.</p>`,
     exemple: `<p>En lisant toutes les descriptions d'un dépôt, on a trouvé : un titre « prod » dont la description, copiée d'un autre ticket, parlait de préproduction ; un « renouvellement de certificat » qui changeait en fait de type de certificat ; un ticket clos dont la description montrait des étapes jamais faites ; une clé de ticket erronée, car les commits faisaient tout autre chose ; et une clé d'API écrite en clair dans une description, à révoquer.</p>`,
     retenir: `<div class="attention">Un secret trouvé dans un ticket se signale, sans sa valeur, et se fait révoquer : un outil de tickets n'est pas un coffre.</div>`,
-    termes: [['Description (ticket)', 'Texte détaillé d\'un ticket : besoin, décision, critères d\'acceptation, à lire en plus du titre.']] }
+    termes: [['Description (ticket)', 'Texte détaillé d\'un ticket : besoin, décision, critères d\'acceptation, à lire en plus du titre.']] },
+  { id: 'doc-monolithe', titre: 'Documenter un très gros dépôt : découper par domaine',
+    definition: `<p>Quand un dépôt est trop gros pour qu'un seul agent lise tout son code, on le <strong>découpe par domaine</strong> (compte client, commande, catalogue…), jamais par période.</p>
+<ol>
+<li><strong>Repérage</strong> : trier le contenu (code du projet, code tiers recopié, fichiers générés, données) et former des groupes d'environ 150 000 lignes ;</li>
+<li><strong>une doc par groupe</strong>, chacune lue en entier, toutes au même commit ;</li>
+<li><strong>une doc d'ensemble</strong> écrite en dernier, qui renvoie vers chaque groupe.</li>
+</ol>
+<p>Découper par période ne marche pas : une doc décrit l'état du code à un commit, et une période ancienne décrirait un code qui n'existe plus.</p>`,
+    exemple: `<p>eos (SAP Commerce) : 31 853 commits et 707 Mo, mais seulement 840 000 lignes de code propre une fois retirés le Node embarqué, les bibliothèques et les données. Il a été documenté le 13/11/2026 en 9 groupes et une doc d'ensemble.</p>`,
+    retenir: `<div class="a-retenir">Une doc décrit un commit, pas une période : on découpe le code par domaine.</div>`,
+    termes: [['Monolithe', 'Application qui regroupe tout son code dans un seul dépôt et un seul programme déployé.']] },
+
+  { id: 'doc-ancres', titre: 'Retrouver un passage quand la doc change',
+    definition: `<p>Un signalement, une épingle ou un surlignage doit retenir <strong>où</strong> il se trouve. Retenir une <strong>position</strong> (« le 1 200ᵉ caractère ») casse dès que la doc est régénérée : le repère tombe sur un autre texte. Retenir le <strong>texte cité</strong> permet de le chercher à nouveau.</p>
+<p>Mais un passage qui disparaît ne veut pas dire que le problème est réglé : une anomalie dont le texte a disparu doit rester ouverte, « à revérifier ».</p>`,
+    exemple: `<p>Depuis le 13/11/2026, un signalement de lecteur vérifie que son texte est toujours à sa position ; sinon, il le cherche ailleurs dans la doc et se repose dessus.</p>`,
+    retenir: `<div class="attention">Passage disparu ≠ anomalie résolue.</div>`,
+    termes: [['Ancre', 'Repère qui permet de retrouver un endroit précis d\'une page.']] }
 
   ] },
 
@@ -949,7 +994,13 @@ DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(minuit)   // "2026-11-05 
     definition: `<p>Une session Claude peut lancer des <strong>agents</strong> en arrière-plan : chacun reçoit une consigne écrite, travaille seul avec son propre contexte, puis rend un rapport. Ils tournent en même temps, ce qui fait gagner du temps sur des tâches indépendantes.</p>`,
     exemple: `<p>Pour relire six docs, six agents sont partis en même temps, un par doc. Chacun ne connaissait que sa page, ses sources et la consigne : c'est ce qui les rend indépendants de l'auteur.</p>`,
     retenir: `<div class="attention">Deux agents ne doivent jamais modifier le même fichier. Et le rapport d'un agent se vérifie comme toute relecture : un constat sûr de lui n'est pas un constat vérifié.</div>`,
-    termes: [['Agent', 'Instance de Claude lancée par une session pour une tâche précise, avec sa propre consigne et son propre contexte.']] }
+    termes: [['Agent', 'Instance de Claude lancée par une session pour une tâche précise, avec sa propre consigne et son propre contexte.']] },
+  { id: 'claude-tokens', titre: 'Tokens et limite d\'utilisation',
+    definition: `<p>Claude compte son travail en <strong>tokens</strong>, des morceaux de mots : tout ce qu'il lit (fichiers, résultats de commandes, historique de la conversation relu à chaque échange) et tout ce qu'il écrit. L'abonnement donne un quota par <strong>fenêtre de 5 heures</strong>, plus une limite par semaine ; le pourcentage affiché dans l'app est la part déjà consommée.</p>
+<p>Ce qui coûte le plus : les <strong>agents</strong> (chacun relit lui-même le prompt, le code, les tickets) et les <strong>relectures</strong>, qui revérifient chaque affirmation dans les sources.</p>`,
+    exemple: `<p>Une doc de dépôt rédigée par un agent représente environ 400 000 tokens. Le 13/11/2026, les 9 agents d'eos lancés en parallèle ont atteint la limite des 5 heures : ils ont repris là où ils s'étaient arrêtés après la remise à zéro.</p>`,
+    retenir: `<div class="a-retenir">Pour consommer moins : moins d'agents en même temps, un modèle plus léger pour les tâches simples, des relectures ciblées, et une nouvelle conversation de temps en temps.</div>`,
+    termes: [['Token', 'Morceau de mot avec lequel un modèle d\'IA compte ce qu\'il lit et écrit.'], ['Fenêtre de 5 heures', 'Période glissante sur laquelle le quota d\'utilisation de Claude est compté.']] }
   ] }
 
 ] };
